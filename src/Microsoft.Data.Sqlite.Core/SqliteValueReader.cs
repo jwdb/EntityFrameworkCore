@@ -42,26 +42,39 @@ namespace Microsoft.Data.Sqlite
 
         public virtual DateTime GetDateTime(int ordinal)
         {
-            var sqliteType = GetSqliteType(ordinal);
+            int sqliteType = this.GetSqliteType(ordinal);
             switch (sqliteType)
             {
                 case raw.SQLITE_FLOAT:
                 case raw.SQLITE_INTEGER:
+                    double dataDouble = this.GetDouble(ordinal);
+                    if (dataDouble > 5373484)
+                    {
+                        return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(dataDouble)).DateTime;
+                    }
                     return FromJulianDate(GetDouble(ordinal));
 
                 default:
                     return DateTime.Parse(GetString(ordinal), CultureInfo.InvariantCulture);
             }
+
+            return DateTime.Parse(this.GetString(ordinal), CultureInfo.InvariantCulture);
         }
 
         public virtual DateTimeOffset GetDateTimeOffset(int ordinal)
         {
-            var sqliteType = GetSqliteType(ordinal);
+            int sqliteType = this.GetSqliteType(ordinal);
             switch (sqliteType)
             {
                 case raw.SQLITE_FLOAT:
                 case raw.SQLITE_INTEGER:
-                    return new DateTimeOffset(FromJulianDate(GetDouble(ordinal)));
+                    double dataDouble = this.GetDouble(ordinal);
+
+                    if (dataDouble > 5373484)
+                    {
+                        return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(dataDouble));
+                    }
+                    return new DateTimeOffset(SqliteValueReader.FromJulianDate(dataDouble));
 
                 default:
                     return DateTimeOffset.Parse(GetString(ordinal), CultureInfo.InvariantCulture);
